@@ -93,7 +93,7 @@ sudo ./aws/install
 ```
 
 
-Once the Cluster is ready run the command to set context:
+Once the Cluster is ready run the command to set connect EKS to your kubectl:
 ```
 aws eks update-kubeconfig --name cluster1 --region ap-south-1
 ```
@@ -113,7 +113,7 @@ Solution for error :
 kubectl edit configmap aws-auth -n kube-system
 ```
 
-add this data in the aws-auth
+add this data in the aws-auth or use AWS configure 
 
 ```
 - rolearn: <YOUR ARN>
@@ -157,15 +157,15 @@ kubectl apply -f mongo-service.yaml
 ```
 
 
-Go inside mongo-0 pod
+Go inside mongo-0 pod to set replication
 ```
 kubectl exec -it mongo-0 -- mongo
 ```
 
-Run these commands while you inside 
+Run these commands while you inside to set replication (main) and secondary
 
 ```
-rs.initiate();
+rs.initiate(); 
 sleep(2000);
 rs.add("mongo-1.mongo:27017");
 sleep(2000);
