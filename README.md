@@ -55,10 +55,16 @@ After working on this project, I have develop a deeper understanding of cloud-na
 
 
 
-Step 1 :Create EKS cluster with NodeGroup (2 nodes of t2.medium instance type)
-Step 2 :Create EC2 Instance t2.micro (For kubectl)
+Step 1 :Create EKS cluster with IAM Role `myAmazonEKSClusterRole` and NodeGroup (2 nodes of t2.medium instance type) with IAM Role `myAmazonEKSNodeRole` along with `EBS CSI add ons` {this is responsible to create persistent volumes automatically}
 
-## USe this IAM role for ec2 (t2.micro)	
+
+
+
+
+Step 2 :Create EC2 Instance as bastion host (t2.micro). attach an `IAM role with admin Access`/ use the below policy / use `aws configure credentials`
+
+
+## USe this IAM role for your bastion host (t2.micro) or use IAM role `AEKSAccess` with administrator access access	
 ```
 {
 	"Version": "2012-10-17",
@@ -77,23 +83,43 @@ Step 2 :Create EC2 Instance t2.micro (For kubectl)
 }
 ```
 
-step 3 :Install Kubectl on (t2.micro)	
+step 3 :Install Kubectl on bastion host
+
 ```
 curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.24.11/2023-03-17/bin/linux/amd64/kubectl
+```
+
+```
 chmod +x ./kubectl
+```
+
+```
 sudo cp ./kubectl /usr/local/bin
+```
+
+```
 export PATH=/usr/local/bin:$PATH
 ```
 
+
+
 step 4 :Install AWScli:
-```
+
+``` shell
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo apt install unzip
 unzip awscliv2.zip
-sudo ./aws/install
+sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin --update
+aws configure
 ```
+
+
+
+
 
 
 Once the Cluster is ready run the command to set connect EKS to your kubectl:
+
 ```
 aws eks update-kubeconfig --name cluster1 --region ap-south-1
 ```
@@ -116,11 +142,12 @@ kubectl edit configmap aws-auth -n kube-system
 add this data in the aws-auth or use AWS configure 
 
 ```
-- rolearn: <YOUR ARN>
+- rolearn: <YOUR ARN OF amazoneksnoderole>
   username: EKSaccess
   groups:
 	- system:masters
 ```
+
 
 
 
@@ -129,15 +156,17 @@ Clone the github repo
 git clone https://github.com/sohailshaikh23/voting-app.git
 ```
 
-**Create Namespace as voting_apps **
+**Create Namespace as voting **
+
 
 ```
 kubectl create ns voting_app
 ```
+
 ** set  this namespace as default **
 
 ```
-kubectl config set-context --current --namespace voting_app
+kubectl config set-context --current --namespace voting
 
 ```
 
@@ -145,19 +174,19 @@ kubectl config set-context --current --namespace voting_app
 **MONGO Database Setup**
 
 
-To create Mongo statefulset with Persistent volumes, use this manifests file:
+create Mongo statefulset with Persistent volumes :
 
 ```
 kubectl apply -f mongo-statefulset.yaml
 ```
 
-Mongo Service
+create Mongo Service : 
 ```
 kubectl apply -f mongo-service.yaml
 ```
 
 
-Go inside mongo-0 pod to set replication
+Go inside mongo-0 pod and set replication
 ```
 kubectl exec -it mongo-0 -- mongo
 ```
@@ -260,7 +289,6 @@ check loadbalancer URL in browser with /ok , /languages, /languages/python
 
 
 Create and apply frontend deploymeny files
-
 ```
 kubectl apply -f frontend-deployment.yaml
 ```
@@ -272,7 +300,18 @@ kubectl apply -f front-Service.yaml
 ```
 
 
+
 check loadbalancer URL in browser 
+```
+FRONTEND_ELB_PUBLIC_FQDN=$(kubectl get svc frontend -ojsonpath="{.status.loadBalancer.ingress[0].hostname}")
+```
+```
+curl -I $FRONTEND_ELB_PUBLIC_FQDN
+```
+
+```
+echo http://$FRONTEND_ELB_PUBLIC_FQDN
+```
 
 
 
@@ -306,9 +345,7 @@ check loadbalancer URL in browser
 
 
 
-
-
-Test the full end-to-end cloud native application
+Test the application
 
 
 Query MongoDB database directly to observe the updated vote data. In the terminal execute the following command:
