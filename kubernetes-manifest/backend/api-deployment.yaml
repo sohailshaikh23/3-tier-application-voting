@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: voting
+  labels:
+    role: api
+    app: api
+    env: demo
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      role: api
+      app: api
+  template:
+    metadata:
+      labels:
+        role: api
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: cloudacademydevops/api:v3
+        imagePullPolicy: Always
+        env:
+          - name: MONGO_CONN_STR
+            value: mongodb://mongo-0.mongo:27017/langdb?replicaSet=rs0
+          - name: MONGO_USERNAME
+            value: "admin"
+          - name: MONGO_PASSWORD
+            value: "admin"
+        ports:
+        - containerPort: 8080

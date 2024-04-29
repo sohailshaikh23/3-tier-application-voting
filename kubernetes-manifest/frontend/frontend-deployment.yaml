@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: voting
+  labels:
+    role: frontend
+    app: frontend
+    env: demo
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      role: frontend
+      app: frontend
+  template:
+    metadata:
+      labels:
+        role: frontend
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: cloudacademydevops/frontend:v11
+        imagePullPolicy: Always
+        env:
+          - name: REACT_APP_APIHOSTPORT
+            value: "api" #add your API_Load_Balancer DNS manually here if app does not run
+        ports:
+        - containerPort: 8080
