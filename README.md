@@ -121,7 +121,7 @@ aws configure
 Once the Cluster is ready run the command to set connect EKS to your kubectl:
 
 ```
-aws eks update-kubeconfig --name cluster1 --region ap-south-1
+aws eks update-kubeconfig --name voting --region ap-south-1
 ```
 
 
