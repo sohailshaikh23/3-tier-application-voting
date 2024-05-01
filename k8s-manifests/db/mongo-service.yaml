@@ -6,6 +6,7 @@ metadata:
   labels:
     role: db
     env: demo
+    app: db
 spec:
   ports:
   - port: 27017
@@ -13,3 +14,4 @@ spec:
   clusterIP: None
   selector:
     role: db
+    app: db
